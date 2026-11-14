@@ -19,6 +19,8 @@ phân quyền FastWork theo vai trò + chức năng, thông báo trong app.
 
 ## Chạy lần đầu
 
+> Không muốn cài Node.js/MySQL? Xem **[Chạy bằng Docker](#chạy-bằng-docker)** – một lệnh là chạy cả app lẫn database.
+
 ```bash
 docker compose up -d
 ```
@@ -177,31 +179,170 @@ với 173 lịch đăng ký (12 tuần qua + tuần này), 2 ủy quyền duyệ
   không bị sửa/khoá trong trang Tổ chức khi bật `DEMO_MODE`. Đăng nhập một chạm chỉ hoạt động khi
   `DEMO_MODE=true` và chỉ với tài khoản `is_demo`.
 
-## Chạy bằng Docker / deploy
+## Chạy bằng Docker
 
-Image (~1.5 GB) gồm app build dạng **standalone** của Next.js (chỉ kèm thư viện server thật sự dùng) và
-Chromium cho xuất PDF; phần lớn dung lượng là Chromium. Khi khởi động, container tự chờ MySQL, chạy
-migration + seed, tạo tài khoản quản trị từ `ADMIN_*`, rồi chạy app.
+Cách nhanh nhất để chạy toàn bộ hệ thống (app + MySQL) mà không cần cài Node.js hay MySQL trên máy.
 
-1. Trong `.env` cạnh `docker-compose.yml`, đặt tối thiểu `JWT_SECRET` và `ADMIN_PASSWORD`. Với bản demo
-   công khai, đặt thêm `DEMO_MODE=true` và `DEMO_AUTO_RESET=true`.
-2. Chạy:
+Image `workflow-approval-engine` (~1.5 GB) gồm app Next.js build dạng **standalone** (chỉ kèm thư viện
+server thật sự dùng) và **Chromium** cho chức năng xuất PDF – phần lớn dung lượng là Chromium. Khi khởi
+động, container tự:
+
+1. chờ MySQL sẵn sàng,
+2. chạy migration + seed (`scripts/db-init.js`, chạy lại nhiều lần vẫn an toàn),
+3. tạo tài khoản quản trị từ `ADMIN_EMAIL` / `ADMIN_PASSWORD` (nếu chưa có),
+4. chạy app, và nếu bật `DEMO_MODE` thì tạo dữ liệu demo lần đầu.
+
+### 1. Chuẩn bị
+
+- **Docker Desktop** (Windows/macOS – Windows cần bật WSL 2) hoặc **Docker Engine + Docker Compose v2** (Linux).
+- Khoảng **4 GB** ổ đĩa trống và **2 GB** RAM cho Docker.
+- Kiểm tra:
+
+```bash
+docker compose version
+```
+
+### 2. Lấy code và tạo file `.env`
+
+```bash
+git clone https://github.com/lehai4/workflow-approval_engine.git
+```
+
+```bash
+cd workflow-approval_engine
+```
+
+```bash
+cp .env.example .env
+```
+
+Mở `.env` và đặt **tối thiểu**:
+
+| Biến | Bắt buộc | Ghi chú |
+| --- | --- | --- |
+| `JWT_SECRET` | ✅ | **Đổi** giá trị mẫu `change-me-...` thành chuỗi ngẫu nhiên dài (lệnh bên dưới). Để trống thì compose báo lỗi và không chạy. |
+| `ADMIN_PASSWORD` | ✅ | Mật khẩu tài khoản quản trị đầu tiên (`ADMIN_EMAIL`, mặc định `admin@example.com`). |
+| `DB_PASSWORD` | nên đổi | Mật khẩu root MySQL. **Chỉ có tác dụng lần đầu** tạo volume dữ liệu (xem phần Sự cố). |
+| `DEMO_MODE` | tuỳ chọn | `true` = bật đăng nhập một chạm + tự tạo dữ liệu demo (portfolio). |
+| `DEMO_AUTO_RESET` | tuỳ chọn | `true` = tự làm mới dữ liệu demo mỗi đêm (`DEMO_RESET_CRON`). |
+| `ALLOW_REGISTER` | nên tắt | File mẫu đang để `true` (cho tự đăng ký tài khoản). Đặt `false` nếu đưa lên mạng. |
+
+Tạo `JWT_SECRET` (dùng `openssl rand -hex 48` nếu máy không có Node.js):
+
+```bash
+node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"
+```
+
+> Khi chạy bằng Docker, `DB_HOST` / `DB_PORT` / `DB_USER` trong `.env` được bỏ qua – compose tự trỏ app
+> vào container MySQL (`mysql_db`). Các biến khác lấy từ `.env`; danh sách đầy đủ ở phần `environment`
+> của service `app` trong `docker-compose.yml`.
+
+### 3. Build và chạy
 
 ```bash
 docker compose --profile app up -d --build
 ```
 
-App ở http://localhost:3000 (đổi cổng: `APP_PUBLISH_PORT`). Lệnh `docker compose up -d` không có
-`--profile app` vẫn chỉ chạy MySQL như khi phát triển.
+- Lần đầu mất khoảng **5–10 phút** (tải image Node/MySQL, cài Chromium, build Next.js). Những lần sau
+  dùng lại cache nên nhanh hơn nhiều.
+- Mở **http://localhost:3000** và đăng nhập bằng `ADMIN_EMAIL` / `ADMIN_PASSWORD`, hoặc chọn một tài
+  khoản ở mục "Dùng thử nhanh" nếu bật `DEMO_MODE`.
+- `--profile app` là để chạy cả app. Không có nó, `docker compose up -d` chỉ chạy MySQL (dùng khi phát
+  triển bằng `npm run dev`).
 
-- `DEMO_MODE=true`: lần khởi động đầu tự tạo dữ liệu demo (`DEMO_SEED_ON_START`, mặc định bật).
-- `PUBLIC_APP_URL`: địa chỉ công khai (vd `https://fastwork.example.com`), dùng cho link file tải lên.
-- File tải lên nằm ở volume `uploads`, dữ liệu MySQL ở volume `mysql_data`.
-- Deploy lên VPS: cài Docker, chép dự án + `.env`, chạy lệnh trên, rồi đặt reverse proxy có HTTPS
-  (Caddy, Nginx) trỏ vào cổng 3000. Nếu không cần truy cập MySQL từ ngoài, xoá phần `ports` của
-  `mysql_db` hoặc đặt `DB_PUBLISH_PORT=127.0.0.1:3306`.
-- Nền tảng nhận Dockerfile (Railway, Render, Fly.io…): build từ `Dockerfile`, khai báo các biến như
-  phần `environment` của service `app`, trỏ `DB_*` vào MySQL 8 của nền tảng.
+Kiểm tra trạng thái – cả hai container phải ở `healthy`:
+
+```bash
+docker compose --profile app ps
+```
+
+Xem log khởi động (thấy các dòng `[start] ...` và `Ready` là xong):
+
+```bash
+docker logs -f workflow_app
+```
+
+### 4. Lệnh hay dùng
+
+| Việc | Lệnh |
+| --- | --- |
+| Dừng (giữ nguyên dữ liệu) | `docker compose --profile app down` |
+| Chạy lại | `docker compose --profile app up -d` |
+| Cập nhật code mới rồi chạy lại | `git pull` rồi `docker compose --profile app up -d --build` |
+| Khởi động lại app | `docker restart workflow_app` |
+| Xem log app / MySQL | `docker logs -f workflow_app` / `docker logs -f workflow_mysql` |
+| Chạy migration thủ công | `docker exec workflow_app node scripts/db-migrate.js` |
+| Làm mới dữ liệu demo | `docker exec workflow_app node scripts/demo-seed.js --reset --base=http://127.0.0.1:3000/api` |
+| Mở MySQL shell | `docker exec -it workflow_mysql sh -c 'mysql -uroot -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE"'` |
+
+`--reset` của demo-seed chỉ xoá dữ liệu do **tài khoản demo** tạo – dữ liệu người dùng thật giữ nguyên.
+
+### 5. Sao lưu & khôi phục MySQL
+
+Sao lưu (gồm cả trigger và thủ tục lưu sẵn mà schema dùng):
+
+```bash
+docker exec workflow_mysql sh -c 'exec mysqldump -uroot -p"$MYSQL_ROOT_PASSWORD" --routines --triggers --single-transaction "$MYSQL_DATABASE"' > backup.sql
+```
+
+Khôi phục:
+
+```bash
+docker exec -i workflow_mysql sh -c 'exec mysql -uroot -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE"' < backup.sql
+```
+
+> Trên Windows chạy hai lệnh này trong **Git Bash** hoặc **cmd**: PowerShell 5 ghi file bằng UTF-16 khi
+> dùng `>` nên file sao lưu sẽ hỏng tiếng Việt.
+
+### 6. Dữ liệu nằm ở đâu
+
+| Volume | Nội dung |
+| --- | --- |
+| `<tên-thư-mục>_mysql_data` | Toàn bộ database |
+| `<tên-thư-mục>_uploads` | File đính kèm người dùng tải lên |
+
+`docker compose down` **không** xoá volume. Muốn xoá sạch để làm lại từ đầu (**mất hết dữ liệu**):
+
+```bash
+docker compose --profile app down -v
+```
+
+### 7. Đổi cổng & cấu hình thêm
+
+| Biến (trong `.env`) | Mặc định | Ý nghĩa |
+| --- | --- | --- |
+| `APP_PUBLISH_PORT` | `3000` | Cổng app trên máy (vd `3100` nếu 3000 đang bận) |
+| `DB_PUBLISH_PORT` | `3306` | Cổng MySQL trên máy. Trên server nên đặt `127.0.0.1:3306` để không mở ra ngoài |
+| `PUBLIC_APP_URL` | `http://localhost:3000` | Địa chỉ công khai – dùng tạo link file tải lên |
+| `COMPANY_NAME`, `COMPANY_ADDRESS`, `COMPANY_PHONE` | trống | Thông tin đơn vị trên bản in/PDF (bản `NEXT_PUBLIC_*` cần build lại image) |
+| `FW_DEFAULT_SLA_HOURS`, `FW_SLA_ALERTS`, `FW_SLA_ESCALATE_AFTER_HOURS` | xem `.env.example` | Nhắc hạn & leo thang SLA |
+
+Đổi biến xong chạy lại `docker compose --profile app up -d` (biến `NEXT_PUBLIC_*` thì thêm `--build`).
+
+### 8. Sự cố thường gặp
+
+| Hiện tượng | Cách xử lý |
+| --- | --- |
+| `Bind for 0.0.0.0:3000 failed: port is already allocated` | Cổng đang bị chương trình khác dùng (vd `npm run dev`). Tắt nó hoặc đặt `APP_PUBLISH_PORT=3100`. Tương tự với `3306` (MySQL cài sẵn trên máy) → `DB_PUBLISH_PORT`. |
+| `required variable JWT_SECRET is missing a value` | Chưa đặt `JWT_SECRET` trong `.env` (file phải nằm cạnh `docker-compose.yml`). |
+| Container `workflow_app` dừng (`Exited`) | Xem nguyên nhân: `docker logs workflow_app`. Thường do sai mật khẩu MySQL hoặc thiếu biến môi trường. |
+| `Access denied for user 'root'` sau khi đổi `DB_PASSWORD` | Mật khẩu root chỉ được đặt **lần đầu** tạo volume. Đặt lại `DB_PASSWORD` như cũ, đổi mật khẩu trong MySQL, hoặc xoá volume (`down -v`, mất dữ liệu). |
+| Docker Desktop không xoá được container | Dùng terminal: `docker rm <tên>` (thêm `-f` nếu còn chạy). Container tên ngẫu nhiên như `crazy_lederberg` sinh ra từ `docker compose run` – xoá thoải mái, không chứa dữ liệu. |
+| Nhắc lịch / thông báo bị gửi 2 lần | Đang chạy cùng lúc `npm run dev` và container app trên **cùng một database** – cả hai đều chạy cron. Chỉ để một bên chạy. |
+| Build lâu hoặc lỗi mạng khi `apt-get` / `npm ci` | Chạy lại lệnh build – các bước đã xong được cache. |
+| Thiếu dung lượng ổ đĩa | Dọn image/cache cũ: `docker image prune` và `docker builder prune`. |
+
+### 9. Triển khai lên server
+
+Cùng bộ file này chạy được trên VPS Linux (kể cả máy ARM như Oracle Cloud Always Free):
+
+1. Cài Docker Engine, mở cổng 80/443, `git clone` dự án, tạo `.env` (đặt `PUBLIC_APP_URL`,
+   `DB_PUBLISH_PORT=127.0.0.1:3306`).
+2. Chạy `docker compose --profile app up -d --build`.
+3. Đặt reverse proxy có HTTPS (Caddy, Nginx) trỏ tên miền vào cổng 3000.
+
+Nền tảng nhận Dockerfile (Railway, Render, Fly.io…): build từ `Dockerfile`, khai báo các biến như phần
+`environment` của service `app`, trỏ `DB_*` vào một MySQL 8 **hỗ trợ trigger và stored procedure**.
 
 ## Cấu trúc
 
