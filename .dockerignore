@@ -1,0 +1,13 @@
+node_modules
+.next
+out
+.git
+.claude
+.env
+.env.*
+!.env.example
+storage
+*.log
+.DS_Store
+Dockerfile
+docker-compose*.yml

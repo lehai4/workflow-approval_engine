@@ -1,0 +1,75 @@
+# Phát triển:   docker compose up -d                       -> chỉ MySQL (app chạy bằng npm run dev)
+# Chạy/deploy: docker compose --profile app up -d --build  -> MySQL + app (http://localhost:3000)
+# Biến ${...} lấy từ file .env cạnh file này (JWT_SECRET, ADMIN_PASSWORD, DEMO_MODE...).
+
+services:
+  mysql_db:
+    image: mysql:8.0
+    container_name: workflow_mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-rootpassword}
+      MYSQL_DATABASE: ${DB_NAME:-workflow_db}
+      TZ: Asia/Ho_Chi_Minh
+    command: ["--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci"]
+    ports:
+      - "${DB_PUBLISH_PORT:-3306}:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  app:
+    profiles: ["app"]
+    build:
+      context: .
+      args:
+        NEXT_PUBLIC_COMPANY_NAME: ${NEXT_PUBLIC_COMPANY_NAME:-}
+        NEXT_PUBLIC_COMPANY_ADDRESS: ${NEXT_PUBLIC_COMPANY_ADDRESS:-}
+        NEXT_PUBLIC_COMPANY_PHONE: ${NEXT_PUBLIC_COMPANY_PHONE:-}
+    image: workflow-approval-engine:latest
+    container_name: workflow_app
+    restart: unless-stopped
+    depends_on:
+      mysql_db:
+        condition: service_healthy
+    ports:
+      - "${APP_PUBLISH_PORT:-3000}:3000"
+    environment:
+      APP_URL: ${PUBLIC_APP_URL:-http://localhost:3000}
+      DB_HOST: mysql_db
+      DB_PORT: 3306
+      DB_USER: root
+      DB_PASSWORD: ${DB_PASSWORD:-rootpassword}
+      DB_NAME: ${DB_NAME:-workflow_db}
+      DB_TIMEZONE: "+07:00"
+      JWT_SECRET: ${JWT_SECRET:?Đặt JWT_SECRET trong .env}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-15m}
+      REFRESH_TOKEN_DAYS: ${REFRESH_TOKEN_DAYS:-30}
+      ALLOW_REGISTER: ${ALLOW_REGISTER:-false}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@example.com}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+      ADMIN_NAME: ${ADMIN_NAME:-Quản trị viên}
+      ENABLE_CRON: ${ENABLE_CRON:-true}
+      FW_DEFAULT_SLA_HOURS: ${FW_DEFAULT_SLA_HOURS:-24}
+      FW_SLA_ALERTS: ${FW_SLA_ALERTS:-true}
+      FW_SLA_ESCALATE_AFTER_HOURS: ${FW_SLA_ESCALATE_AFTER_HOURS:-24}
+      FW_INTEGRATION_API_KEY: ${FW_INTEGRATION_API_KEY:-}
+      COMPANY_NAME: ${COMPANY_NAME:-}
+      COMPANY_ADDRESS: ${COMPANY_ADDRESS:-}
+      COMPANY_PHONE: ${COMPANY_PHONE:-}
+      # Chế độ demo cho portfolio: đăng nhập một chạm + tự tạo dữ liệu mẫu lần đầu + làm mới mỗi đêm
+      DEMO_MODE: ${DEMO_MODE:-false}
+      DEMO_SEED_ON_START: ${DEMO_SEED_ON_START:-true}
+      DEMO_AUTO_RESET: ${DEMO_AUTO_RESET:-false}
+      DEMO_RESET_CRON: ${DEMO_RESET_CRON:-0 3 * * *}
+      DEMO_API_BASE: http://127.0.0.1:3000/api
+    volumes:
+      - uploads:/app/storage/uploads
+
+volumes:
+  mysql_data:
+  uploads:

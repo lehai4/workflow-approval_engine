@@ -1,0 +1,189 @@
+/* Cho phép xuống dòng, hiển thị đầy đủ text */
+.custom-menu .ant-menu-title-content {
+  white-space: normal !important;
+  /* cho phép wrap */
+  word-break: break-word;
+  /* xuống dòng nếu quá dài */
+  overflow: visible !important;
+  /* không bị ẩn */
+  text-overflow: unset !important;
+}
+
+
+/* Cho menu item auto giãn theo nội dung */
+.custom-menu .ant-menu-item,
+.custom-menu .ant-menu-submenu-title {
+  height: auto !important;
+  /* bỏ cố định height */
+  line-height: 1.5 !important;
+  /* giãn dòng để dễ đọc */
+  padding-top: 6px !important;
+  /* padding dọc */
+  padding-bottom: 6px !important;
+}
+
+
+/* Đặt về mặc định */
+/* Đặt padding mặc định cho tất cả các item */
+/* Giá trị mặc định cho cấp 1 */
+/* .custom-menu .ant-menu-item {
+  padding-left: 48px !important; 
+} */
+
+/* Tăng padding cho các item con (cấp sâu hơn cấp 1) */
+/* Áp dụng cho các mục con của submenu */
+/* .custom-menu .ant-menu-submenu .ant-menu-item {
+  padding-left: 55px !important; 
+} */
+
+/* Điều chỉnh cho các item trong group (nếu có) */
+/* Giữ nguyên cho group */
+/* .custom-menu .ant-menu-item-group .ant-menu-item {
+  padding-left: 48px !important; 
+} */
+
+/* Tăng absolute for datepicker */
+.datepicker-popper {
+  z-index: 2000 !important;
+  /* Đặt z-index cao hơn TinyMCE (thường là 1300) */
+}
+
+.form-control.single-date-time.compact-datepicker {
+  height: 32px;
+  padding: 4px 8px;
+  /* Giảm padding để input gọn hơn */
+  border: 1px solid #d9d9d9;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+/* Segmented dành cho trang đăng ký tài nguyên của nhóm tài nguyên */
+.segmented-custom {
+  border: 1px solid #1890ff;
+  border-radius: 2px;
+}
+
+/* Dark mode styles cho react-big-calendar */
+.dark .rbc-calendar {
+  background-color: #1f2937;
+  /* tw-bg-gray-800 */
+  color: #f9fafb;
+  /* tw-text-gray-50 */
+}
+
+.dark .rbc-toolbar button {
+  background: #374151;
+  /* tw-bg-gray-700 */
+  color: #f9fafb;
+}
+
+.dark .rbc-toolbar button.rbc-active {
+  background: #2563eb;
+  /* tw-bg-blue-600 */
+  color: white;
+}
+
+.dark .rbc-off-range-bg {
+  background: #374151;
+  /* tw-bg-gray-700 */
+}
+
+.dark .rbc-today {
+  background: #1e3a8a;
+  /* tw-bg-blue-900 */
+  color: #f9fafb;
+}
+
+
+
+
+/* -------- Toolbar chung -------- */
+
+/* --------  Mobile  < Tablet layout < PC -------- */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .rbc-toolbar {
+    flex-direction: column;
+    gap: 6px;
+    flex-wrap: nowrap !important;
+  }
+}
+
+/* -------- Mobile layout -------- */
+@media (max-width: 768px) {
+  .rbc-toolbar {
+    flex-direction: column;
+    gap: 6px;
+    flex-wrap: nowrap !important;
+  }
+
+  .rbc-toolbar-label {
+    font-weight: 500;
+  }
+
+  /* Nhóm nút chung */
+  .rbc-btn-group {
+    display: flex !important;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 4px;
+    width: 100%;
+  }
+
+  /* Nút riêng lẻ */
+  .rbc-btn-group button {
+    flex: 1 1 calc(33.33% - 8px);
+    /* 3 nút 1 hàng */
+    min-width: 90px;
+    padding: 6px 8px;
+    font-size: 13px;
+    border-radius: 6px;
+    background-color: #f7f7f7;
+    border: 1px solid #ddd;
+    transition: all 0.2s ease;
+  }
+
+  /* Nút hover và active */
+  .rbc-btn-group button:hover {
+    background-color: #e6e6e6;
+  }
+
+  .rbc-btn-group button.rbc-active {
+    background-color: #007bff;
+    color: white;
+    border-color: #007bff;
+  }
+
+  /* Cho nhóm nút view xuống 2 hàng nếu cần */
+  .rbc-btn-group:nth-of-type(2) button {
+    flex: 1 1 calc(50% - 8px);
+    /* 2 nút 1 hàng nếu có 4–5 nút */
+  }
+
+  /* Tránh tràn ngang */
+  .rbc-calendar {
+    overflow-x: hidden;
+  }
+}
+
+
+
+/* Override Ant Design's default selected style to prevent gray background */
+.ant-table-tbody>tr.ant-table-row-selected>td {
+  background: transparent !important;
+}
+
+/* Highlight for selected row */
+.ant-table-tbody>tr.highlighted-row>td {
+  background-color: #fff7ba !important;
+}
+
+/* Style for disabled rows */
+.ant-table-tbody>tr.disabled-row>td {
+  cursor: not-allowed !important;
+  background-color: #f5f5f5 !important;
+}
+
+/* Ensure hover effect works for non-disabled rows */
+.ant-table-tbody>tr:not(.disabled-row):not(.highlighted-row):hover>td {
+  background-color: #fafafa !important;
+}

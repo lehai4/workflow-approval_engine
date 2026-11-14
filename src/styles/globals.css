@@ -1,0 +1,884 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+html,
+body,
+#__next, body > div:first-child {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  /* Ngăn toàn bộ trang web scroll lung tung */
+}
+
+
+a body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
+    "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
+    monospace;
+}
+/* ---- App.css (bản gốc) ---- */
+#sidebar {
+  position: sticky;
+  top: 0;
+  left: 0;
+  width: 250px;
+  height: 100vh;
+  /* Sử dụng 100vh thay vì 100% */
+  background-color: #f0f0f0;
+  z-index: 0;
+  overflow-y: auto;
+  /* Cho phép cuộn dọc khi nội dung vượt quá chiều cao */
+  scrollbar-width: thin;
+  /* Cho Firefox */
+  scrollbar-color: #888 #f0f0f0;
+  /* Cho Firefox */
+}
+
+/* Tùy chỉnh thanh cuộn cho Chrome, Edge, và Safari */
+#sidebar::-webkit-scrollbar {
+  width: 8px;
+  height: 100vh !important;
+  background-color: #f0f0f0;
+  z-index: 0;
+  overflow-y: auto;
+  display: flex; /* Thêm vào */
+  flex-direction: column; /* Thêm vào */
+  max-height: 100vh; /* Thêm vào */
+}
+
+/* Thêm style cho container của các menu items */
+.sidebar-content {
+  flex: 1; /* Thêm vào */
+  overflow-y: auto; /* Thêm vào */
+  padding-bottom: 20px; /* Thêm padding bottom để tránh nội dung bị che khuất */
+}
+
+/* Tùy chỉnh scrollbar cho container */
+.sidebar-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.sidebar-content::-webkit-scrollbar-track {
+  background: #f0f0f0;
+}
+
+.sidebar-content::-webkit-scrollbar-thumb {
+  background-color: #888;
+  border-radius: 4px;
+  border: 2px solid #f0f0f0;
+}
+
+.sidebar-content::-webkit-scrollbar-thumb:hover {
+  background-color: #555;
+}
+
+.sidebar-subheader {
+  padding: 0.75rem 1.5rem 0.25rem;
+  font-size: 0.75rem;
+  font-weight: bold;
+  color: #6c757d;
+  text-transform: uppercase;
+}
+
+.main {
+  z-index: 1;
+}
+.react-datepicker-wrapper {
+  width: 100% !important;
+}
+
+#new-month-salary {
+  width: 100% !important;
+}
+
+.rdt {
+  width: 100%;
+  border: none;
+}
+
+.countdown-container {
+  background-color: #ffc107;
+  font-size: 1.2rem;
+  padding: 10px;
+  margin-bottom: 20px;
+  border-radius: 5px;
+  transition: all 0.3s ease;
+}
+
+.countdown-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.countdown-container.fixed {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  width: 150px;
+  height: 150px;
+  z-index: 1000;
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+.countdown-container.fixed .countdown-content {
+  flex-direction: column;
+}
+
+.countdown-container.fixed small {
+  font-size: 1rem;
+  margin-bottom: 5px;
+}
+
+.countdown-container.fixed strong {
+  font-size: 1.2rem;
+}
+
+@media (max-width: 768px) {
+  .countdown-container.fixed {
+    width: 130px;
+    height: 130px;
+    font-size: 1.2rem;
+  }
+}
+
+/*start table reponsive*/
+.responsiveTable {
+  width: 100%;
+  border-collapse: collapse;
+}
+.responsiveTable td,
+.responsiveTable th {
+  padding: 12px 15px;
+  border: 1px solid #ddd;
+  text-align: center;
+  font-size: 16px;
+}
+.responsiveTable th {
+  background-color: #faebef;
+  color: #0e4274;
+}
+.responsiveTable tbody tr:nth-child(even) {
+  background-color: #d1e8f5;
+}
+
+@media (max-width: 3000px) {
+  .salary-details {
+    max-width: 30%;
+    margin: 0 auto;
+  }
+}
+
+@media (max-width: 1400px) {
+  .salary-details {
+    max-width: 50%;
+    margin: 0 auto;
+  }
+}
+
+@media (max-width: 1000px) {
+  h4 {
+    font-size: 18px;
+  }
+  .salary-details {
+    max-width: 100%;
+    margin: 0 auto;
+  }
+  .responsiveTable thead {
+    display: none;
+  }
+  .responsiveTable,
+  .responsiveTable tbody,
+  .responsiveTable tfoot,
+  .responsiveTable tr,
+  .responsiveTable td {
+    text-align: start !important;
+    display: block;
+    width: 100%;
+  }
+
+  .table > :not(caption) > * > * {
+    padding: 0.5rem 0.5rem;
+    color: var(
+      --bs-table-color-state,
+      var(--bs-table-color-type, var(--bs-table-color))
+    );
+    background-color: var(--bs-table-bg);
+    border-bottom-width: var(--bs-border-width) !important;
+    box-shadow: inset 0 0 0 9999px
+      var(
+        --bs-table-bg-state,
+        var(--bs-table-bg-type, var(--bs-table-accent-bg))
+      );
+  }
+  .responsiveTable tbody tr {
+    margin-bottom: 15px;
+    border-bottom: solid 2px blue;
+  }
+  .responsiveTable td {
+    padding-left: 50% !important;
+    text-align: left;
+    position: relative;
+  }
+  .responsiveTable td:before {
+    content: attr(data-label);
+    position: absolute;
+    left: 0;
+    width: 50%;
+    padding-left: 15px;
+    font-size: 15px;
+    font-weight: bold;
+    text-align: left;
+  }
+}
+/*end table reponsive*/
+/* start react-datepicker */
+.react-datepicker {
+  left: 40px !important;
+  display: flex !important;
+  font-family: Arial, sans-serif;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background-color: white;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.react-datepicker__month-container {
+  float: none !important;
+}
+
+.react-datepicker__time-container {
+  border-left: 1px solid #aeaeae;
+  width: 100px !important;
+  float: none !important;
+}
+
+.react-datepicker__time-container .react-datepicker__time {
+  height: 200px;
+}
+
+.react-datepicker__time-container .react-datepicker__time-box {
+  width: 100% !important;
+}
+
+.react-datepicker__header {
+  background-color: #f0f0f0;
+  border-bottom: 1px solid #ccc;
+  padding: 10px;
+}
+
+.react-datepicker__day {
+  width: 2em;
+  line-height: 2em;
+  margin: 0.166em;
+  border-radius: 0.3em;
+  color: #333;
+}
+
+.react-datepicker__day:hover {
+  background-color: #e6e6e6;
+}
+
+.react-datepicker__day--selected {
+  background-color: #216ba5;
+  color: white;
+}
+
+@media screen and (max-width: 768px) {
+  .react-datepicker {
+    left: 0px !important;
+    flex-direction: column;
+  }
+  .react-datepicker-popper {
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    width: 90vw;
+    max-height: 80vh;
+    background: white;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  .react-datepicker {
+    font-size: 16px;
+    width: 100%;
+    border: none;
+  }
+
+  .react-datepicker__header {
+    background-color: #f0f0f0;
+    padding: 10px 0;
+  }
+
+  .react-datepicker__current-month {
+    font-size: 1.2em;
+    font-weight: bold;
+  }
+
+  .react-datepicker__day-name,
+  .react-datepicker__day {
+    width: 2.5rem;
+    line-height: 2.5rem;
+    margin: 0.2rem;
+  }
+
+  .react-datepicker__day--selected {
+    background-color: #216ba5;
+    color: white;
+    border-radius: 50%;
+  }
+
+  .react-datepicker__time-container {
+    width: 100% !important;
+    border-left: none;
+    border-top: 1px solid #aeaeae;
+  }
+
+  .react-datepicker__time-container .react-datepicker__time {
+    height: 200px;
+  }
+
+  .react-datepicker__time-container .react-datepicker__time-box {
+    width: 100% !important;
+  }
+
+  .react-datepicker__time-list-item {
+    height: 40px !important;
+    line-height: 40px !important;
+    padding: 0 10px !important;
+  }
+
+  .react-datepicker__time-list-item--selected {
+    background-color: #216ba5 !important;
+    color: white !important;
+  }
+
+  .react-datepicker__navigation {
+    top: 8px;
+  }
+
+  .react-datepicker__navigation--previous {
+    left: 10px;
+  }
+
+  .react-datepicker__navigation--next {
+    right: 10px;
+  }
+
+  .react-datepicker__navigation--next--with-time:not(
+      .react-datepicker__navigation--next--with-today-button
+    ) {
+    right: 140px !important;
+  }
+}
+/* end react-datepicker */
+
+/* start sidebar */
+.sidebar-brand {
+  color: #fdfdfd;
+  text-decoration: none;
+  font-weight: bold;
+  font-size: 1.5rem;
+}
+
+.submenu {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease-out;
+}
+
+.submenu.show {
+  max-height: 1000px;
+  transition: max-height 0.5s ease-in;
+}
+
+.submenu.nested {
+  padding-left: 1.5rem;
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease-out;
+}
+
+.submenu.nested.show {
+  max-height: 1000px;
+  transition: max-height 0.5s ease-in;
+}
+.sidebar-content {
+  display: flex;
+  flex-direction: column;
+  height: auto;
+}
+.sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1.5rem;
+  font-size: 0.75rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  /* color: #fdfdfd; */
+  cursor: pointer;
+  opacity: 0.6;
+}
+
+.sidebar-header:hover {
+  /* color: #666; */
+  color: #fdfdfd;
+  background-color: rgba(0, 0, 0, 0.1);
+}
+.sidebar-header:hover {
+  opacity: 1;
+}
+.submenu .sidebar-item {
+  padding-left: 0.5rem;
+}
+
+.submenu.nested .sidebar-item {
+  padding-left: 1rem;
+}
+
+/* Optional: Add transition for smooth icon rotation */
+.sidebar-header .feather {
+  transition: transform 0.3s ease;
+}
+
+.sidebar-header:has(+ .submenu.show) .feather {
+  transform: rotate(90deg);
+}
+
+/* end sidebar */
+/* start salary-table day */
+.first-letter-capital {
+  text-transform: lowercase;
+}
+
+.first-letter-capital::first-letter {
+  text-transform: uppercase;
+}
+
+.salary-table {
+  border-collapse: collapse;
+  width: 100%;
+  background-color: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.salary-table th,
+.salary-table td {
+  border: 1px solid #7a8794 !important; /* Giữ nguyên border như cũ */
+  padding: 5px;
+}
+
+.salary-table th {
+  background-color: #f0f0f0; /* Màu nền nhẹ cho header */
+  font-weight: bold;
+  text-align: center;
+  vertical-align: top;
+  color: #333;
+}
+
+/* Thêm màu nền xen kẽ cho các dòng */
+.salary-table tr:nth-child(odd) {
+  background-color: #ffffff;
+}
+
+.salary-table th {
+  background-color: #fff;
+}
+.salary-table tr:nth-child(even) {
+  background-color: #f0f0f0;
+}
+
+/* Hiệu ứng hover */
+.salary-table tr:hover {
+  background-color: #e6f3ff;
+}
+
+/* Style cho các ô số liệu */
+.salary-table td.text-end {
+  text-align: right;
+  /* padding-right: 15px; */
+}
+
+/* Style cho dòng tổng cộng */
+.salary-table tr.total-row {
+  background-color: #dcdcdc;
+  font-weight: bold;
+}
+
+/* Style cho phần chi tiết công việc */
+.salary-table tr td:first-child {
+  white-space: nowrap; /* Giữ mã không bị ngắt dòng */
+}
+
+/* Đảm bảo các cột số liệu được căn phải */
+.salary-table td[data-label="Sản lượng"],
+.salary-table td[data-label="Hệ số thưởng"],
+.salary-table td[data-label="TLHT"] {
+  text-align: right;
+}
+/* end salary-table day */
+
+/* Thêm vào phần CSS sidebar */
+.submenu.nested {
+  padding-left: 1.5rem; /* Lùi vào so với menu cha */
+}
+
+.sidebar-item .sidebar-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-direction: row-reverse;
+  padding: 0.75rem 1.5rem;
+  /* color: #fdfdfd; */
+  cursor: pointer;
+}
+
+.sidebar-item .sidebar-link:hover {
+  /* color: #666; */
+  color: #fdfdfd;
+  opacity: 1;
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+/* Thêm style cho menu items */
+.sidebar-item {
+  margin: 0.2rem 0;
+}
+
+.sidebar-link {
+  padding: 0.5rem 1.5rem;
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  /* color: #fdfdfd; */
+}
+
+.sidebar-link:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.sidebar-link .feather {
+  margin-right: 0.5rem;
+}
+
+/* Điều chỉnh padding và margin cho cấu trúc phân cấp */
+.submenu .sidebar-item {
+  padding-left: 0.5rem;
+}
+
+.submenu.nested .sidebar-item {
+  padding-left: 1rem;
+}
+
+/* Sửa lại style cho sidebar-link */
+.sidebar-link {
+  padding: 0.75rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between; /* Giữ nguyên để đẩy icon sang phải */
+  text-decoration: none;
+  /* color: #fdfdfd; */
+  width: 100%;
+}
+
+/* Bỏ margin và padding mặc định của sidebar-item */
+.sidebar-item {
+  margin: 0;
+  padding: 0;
+}
+
+/* Bỏ padding left của submenu items */
+.submenu .sidebar-item {
+  padding-left: 0;
+}
+
+.submenu.nested .sidebar-item {
+  padding-left: 0;
+}
+
+/* Điều chỉnh padding cho submenu nested */
+.submenu.nested {
+  padding-left: 1.5rem;
+}
+
+/* Icon trong sidebar-link */
+.sidebar-link .feather {
+  margin-left: auto; /* Giữ nguyên để đẩy icon sang phải */
+}
+
+/* Bỏ gap và margin của text và icon */
+.sidebar-link-text {
+  display: flex;
+  align-items: center;
+  gap: 0; /* Bỏ khoảng cách giữa icon và text */
+}
+
+.sidebar-link-text .feather {
+  margin-right: 0.5rem; /* Khoảng cách nhỏ giữa icon và text */
+}
+
+.select-option {
+  background-color: #f0f0f0;
+  padding: 10px;
+  border-radius: 5px;
+}
+
+/* start sticky table */
+.table-container {
+  max-height: calc(100vh - 300px);
+  overflow-y: auto;
+  position: relative;
+}
+
+.table-container table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.table-container thead {
+  position: sticky;
+  top: 0;
+  z-index: 99;
+}
+
+.table-container th {
+  background-color: #f8f9fa;
+  border-bottom: 2px solid #dee2e6;
+  box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.1);
+}
+
+/* Đảm bảo dropdown của Select hiển thị đúng */
+.select__menu {
+  z-index: 999;
+}
+
+/* Đảm bảo các cột có background che phủ content khi scroll */
+.table-container th::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  background-color: #f8f9fa;
+  z-index: -1;
+}
+/* end sticky table */
+
+/* Custom scrollbar cho table container */
+.table-container::-webkit-scrollbar {
+  width: 6px; /* Chiều rộng thanh scrollbar */
+}
+
+.table-container::-webkit-scrollbar-track {
+  background: #f1f1f1; /* Màu nền của track */
+  border-radius: 3px;
+}
+
+.table-container::-webkit-scrollbar-thumb {
+  background: #c1c1c1; /* Màu của thumb */
+  border-radius: 3px;
+  transition: background 0.2s ease;
+}
+
+.table-container::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8; /* Màu khi hover */
+}
+
+/* Ẩn scrollbar mặc định trên Firefox */
+.table-container {
+  scrollbar-width: thin;
+  scrollbar-color: #c1c1c1 #f1f1f1;
+}
+
+/* start approve modal */
+
+.approve-modal .ant-modal-content {
+  border-radius: 8px;
+  padding: 0;
+}
+
+.approve-modal .ant-modal-header {
+  border-radius: 8px 8px 0 0;
+  background-color: #f5f5f5;
+  padding: 16px 24px;
+  border-bottom: 1px solid #e8e8e8;
+}
+
+.modal-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.modal-content {
+  padding: 20px;
+}
+
+.info-group {
+  margin-bottom: 24px;
+}
+
+.info-row {
+  display: flex;
+  margin-bottom: 12px;
+  align-items: flex-start;
+}
+
+.info-label {
+  width: 140px;
+  font-weight: 800;
+  color: #666;
+  flex-shrink: 0;
+}
+
+.info-value {
+  flex: 1;
+  color: #1a1a1a;
+}
+
+.note-section {
+  margin-top: 16px;
+}
+
+.note-label {
+  font-weight: 600;
+  color: #666;
+  margin-bottom: 8px;
+}
+
+.note-input {
+  border-radius: 4px;
+  resize: none;
+}
+
+.approve-modal .ant-modal-footer {
+  border-top: 1px solid #e8e8e8;
+  padding: 16px 24px;
+}
+
+.btn-default {
+  border-radius: 4px;
+}
+
+.btn-reject {
+  border-radius: 4px;
+  margin: 0 8px;
+}
+
+.btn-approve {
+  border-radius: 4px;
+  background-color: #1890ff;
+}
+
+.btn-approve:hover {
+  background-color: #40a9ff;
+}
+
+/* end approve modal */
+.sync-icon:hover{
+  cursor: pointer;
+}
+/* TinyMCE */
+/* Ẩn logo "Get all features" và "Build with TinyMCE" */
+.tox-statusbar__branding,
+.tox-promotion {
+  display: none !important;
+}
+
+.tox-branding-powered-by {
+  display: none !important;
+}
+/* Ẩn thanh công cụ "Get all features" */
+
+/* Css lại Nội dung hiển thị đề xuất */
+/* Đảm bảo các cột không bị co lại quá nhỏ  */
+.outline_content {
+  width: 100%;
+  overflow-x: auto; /* Cho phép cuộn ngang nếu nội dung quá rộng */
+  overflow-y:visible; /* Đảm bảo nội dung dọc không bị cắt */
+  -webkit-overflow-scrolling: touch; /* Mượt mà hơn trên thiết bị di đông */
+  white-space: normal;
+}
+.outline_content table {
+  border-collapse: collapse;
+}
+.outline_content th,
+.outline_content td {
+  border: 1px solid #ddd;
+  white-space: normal;
+  overflow-wrap: break-word;
+  word-break: normal;
+  vertical-align: auto;
+}
+
+/* Tùy chọn: Tinh chỉnh trên màn hình nhỏ */
+@media (max-width: 768px) {
+  .outline_content {
+    overflow-x: auto; /* Cuộn ngang trên màn hình nhỏ */
+  }
+}
+
+/* custom timeline ant for FW */
+.ant-timeline .ant-timeline-item-head{
+  background-color: transparent !important;
+}
+
+/* ✅ Vô hiệu hoá tương tác checkbox trong nội dung xem CHI TIẾT đề nghị
+   (render bằng dangerouslySetInnerHTML nên input vẫn là phần tử thật của
+   trình duyệt, có thể click được dù không lưu lại). Chỉ giao diện soạn
+   thảo trong TinyMCE mới cho phép tích/bỏ tích. */
+.custom-html-render input[type="checkbox"],
+.outline_content input[type="checkbox"] {
+  pointer-events: none;
+  cursor: default;
+  opacity: 0.85;
+}
+
+/* ✅ Menu "NGHỈ PHÉP" (và các menu group khác dùng chung class này) ở
+   Sidebar có nhiều group (Cấu hình/Quản lý/Khai báo/Đăng ký) nên danh
+   sách item khá dài. Thu gọn chiều cao item/tiêu đề group + khoảng cách
+   giữa các group để hiển thị được nhiều mục hơn mà không cần cuộn nhiều,
+   đồng thời khu vực menu (thẻ <nav>) đã được cho phép cuộn riêng độc lập
+   với sidebar (xem components/layout/index.jsx). */
+.custom-menu.ant-menu-inline .ant-menu-item,
+.custom-menu.ant-menu-inline .ant-menu-submenu-title {
+  height: 32px;
+  line-height: 32px;
+  margin-block: 1px;
+}
+
+.custom-menu .ant-menu-item-group-title {
+  padding: 6px 16px 2px;
+  font-size: 12px;
+  line-height: 1.2;
+  opacity: 0.65;
+}
+
+.custom-menu .ant-menu-item-group:not(:first-child) {
+  margin-top: 4px;
+}
+
+.custom-menu .ant-menu-item-group-list {
+  margin-inline: 0;
+}
