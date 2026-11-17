@@ -12,6 +12,7 @@ import { useNavigationForFw } from "@/hooks/use-navigate-for-fw";
 import useSWRConfig, { createQueryParams } from "@/hooks/use-swr";
 import { formatDateNotSecond } from "@/utils";
 import {
+  ClockCircleOutlined,
   DeleteOutlined,
   LoadingOutlined,
   PlusOutlined,
@@ -834,6 +835,147 @@ const ProposalWithParamsContent = () => {
     //   },
     // },
   ].filter(Boolean); // Loại bỏ các cột undefined (trường hợp type === "approved")
+
+  // Điện thoại: mỗi đề xuất là một thẻ (dùng lại cách hiển thị của các cột ở trên) thay vì bảng cuộn ngang
+  const columnRender = (key, record) => {
+    const col = column.find((c) => c && c.key === key);
+    return col?.render ? col.render(record[col.dataIndex], record) : record[key];
+  };
+  // Tên đề xuất (link khi có quyền xem) - dùng chung cho thẻ điện thoại và bảng desktop
+  const nameLink = (record) =>
+    state?.userFeature?.includes("VIEW") ? (
+      <Link
+        to={`?view=${view}&type=${type}&uid=${record.uid}&tab=${activeTabKey}&page=${pageByTab[activeTabKey] || 1}`}
+        className="fwp-name"
+      >
+        {record.name_proposal_reality}
+      </Link>
+    ) : (
+      <span className="fwp-name">{record.name_proposal_reality}</span>
+    );
+
+  const mobileColumns = [
+    {
+      key: "card",
+      render: (_, record) => (
+        <div className="tw-flex tw-flex-col tw-gap-1 tw-py-1">
+          <div className="tw-flex tw-items-start tw-justify-between tw-gap-2">
+            <div className="tw-font-medium tw-text-[15px] tw-leading-snug tw-min-w-0 tw-break-words">
+              {nameLink(record)}
+            </div>
+            <div className="tw-shrink-0">{columnRender("status", record)}</div>
+          </div>
+          <div className="tw-text-xs tw-text-gray-500 tw-truncate">{record.name_proposal_type}</div>
+          <div className="tw-flex tw-items-center tw-justify-between tw-gap-2 tw-text-xs tw-text-gray-500">
+            <span className="tw-truncate">{columnRender("created_by", record)}</span>
+            <span className="tw-shrink-0">{formatDateNotSecond(record.created_at)}</span>
+          </div>
+          {/* Đang chờ duyệt: người duyệt ở bước hiện tại (API trả sẵn 1 người của bước approval_level) */}
+          {(() => {
+            const p = pendingInfo(record);
+            if (!p) return null;
+            return (
+              <div className="tw-flex tw-items-center tw-gap-1.5 tw-text-xs tw-text-amber-700 tw-bg-amber-50 tw-rounded tw-px-2 tw-py-1 tw-mt-0.5">
+                <ClockCircleOutlined className="tw-shrink-0" />
+                <span className="tw-truncate">Đang chờ: {p.who}</span>
+                {p.step && <span className="tw-shrink-0 tw-ml-auto tw-text-amber-600">{p.step}</span>}
+              </div>
+            );
+          })()}
+        </div>
+      ),
+    },
+  ];
+  // Người duyệt đang chờ ở bước hiện tại (dùng cho thẻ điện thoại và cột "Đang chờ" trên desktop)
+  const pendingInfo = (record) => {
+    if (!(record?.status === 1 && !record?.is_approval_flow)) return null;
+    const nv = state.syncNV.find((n) => n.ma_nv === record.ma_nv);
+    if (!nv) return null;
+    const step = Number(record.step_flow ?? record.approval_level);
+    return {
+      who: `${nv.ten_phong_ban} (${nv.ten_nv})`,
+      name: nv.ten_nv,
+      dept: nv.ten_phong_ban,
+      step: record.isFinalFlow === 1 ? "Bước cuối" : Number.isFinite(step) ? `Bước ${step + 1}` : null,
+    };
+  };
+
+  // Desktop: gộp 7 cột thành 5 (tên + loại/mã, người đề xuất + phòng ban, ngày, trạng thái, đang chờ ai)
+  // cho bảng thoáng; dùng lại cách hiển thị của các cột cũ ở trên (column)
+  const desktopColumns = [
+    {
+      title: "Đề xuất",
+      key: "name_proposal_reality",
+      dataIndex: "name_proposal_reality",
+      render: (_, record) => (
+        <div className="tw-flex tw-flex-col tw-gap-0.5 tw-min-w-0">
+          {nameLink(record)}
+          <span className="tw-text-xs tw-text-gray-500 tw-truncate">
+            {[record.name_proposal_type, record.prefix_name_proposal_reality].filter(Boolean).join(" · ")}
+          </span>
+        </div>
+      ),
+    },
+    {
+      title: "Người đề xuất",
+      dataIndex: "created_by",
+      key: "created_by",
+      width: 230,
+      ...getColumnSearchProps("created_by"),
+      render: (createdBy, record) => (
+        <div className="tw-flex tw-flex-col tw-gap-0.5 tw-min-w-0">
+          <span className="tw-truncate">{columnRender("created_by", record)}</span>
+          <span className="tw-text-xs tw-text-gray-500 tw-truncate">{columnRender("id_department", record)}</span>
+        </div>
+      ),
+    },
+    {
+      title: "Ngày đề xuất",
+      key: "created_at",
+      dataIndex: "created_at",
+      width: 160,
+      render: (text) => <span className="tw-text-gray-600 tw-whitespace-nowrap">{formatDateNotSecond(text)}</span>,
+      sorter: (a, b) => new Date(a.created_at) - new Date(b.created_at),
+    },
+    type !== "approved" && {
+      title: "Trạng thái",
+      key: "status",
+      dataIndex: "status",
+      width: 140,
+      render: (_, record) => columnRender("status", record),
+    },
+    {
+      title: "Đang chờ",
+      key: "ma_nv",
+      dataIndex: "ma_nv",
+      width: 260,
+      render: (_, record) => {
+        const p = pendingInfo(record);
+        if (!p) return <span className="tw-text-gray-300">—</span>;
+        return (
+          <div className="tw-flex tw-flex-col tw-gap-0.5 tw-min-w-0" title={p.who}>
+            <span className="tw-text-amber-700 tw-truncate">
+              <ClockCircleOutlined className="tw-mr-1" />
+              {p.name}
+            </span>
+            <span className="tw-text-xs tw-text-gray-500 tw-truncate">
+              {[p.dept, p.step].filter(Boolean).join(" · ")}
+            </span>
+          </div>
+        );
+      },
+    },
+  ].filter(Boolean);
+
+  // Props bảng dùng chung cho tab "Tất cả" và từng loại đề xuất
+  const tableLayoutProps = isMobile
+    ? { columns: mobileColumns, showHeader: false, size: "small", tableLayout: "fixed" } // fixed: chữ dài cắt "..." thay vì đẩy rộng thẻ
+    : {
+        columns: desktopColumns,
+        tableLayout: "fixed",
+        scroll: { y: "100%" },
+        rowSelection: rowSelectionProposal,
+      };
 
   const getProposalCountByConfig = () => {
     const counts = state.proposals.reduce((acc, proposal) => {
@@ -3000,6 +3142,7 @@ const ProposalWithParamsContent = () => {
   return (
     <>
       {contextHolder}
+      <style>{PROPOSAL_LIST_CSS}</style>
       <div className="tw-flex tw-flex-col tw-h-full tw-overflow-hidden tw-bg-gray-100">
         {(status.isLoading || status.isSubmitting || status.isUpdating) && (
           <div className="tw-fixed tw-inset-0 tw-z-[9999] tw-bg-black tw-bg-opacity-50 tw-flex tw-items-center tw-justify-center">
@@ -3080,7 +3223,7 @@ const ProposalWithParamsContent = () => {
                     </div>
 
                     <Table
-                      columns={column}
+                      {...tableLayoutProps}
                       dataSource={state.proposals.map((item, i) => ({
                         ...item,
                         key: i,
@@ -3092,7 +3235,6 @@ const ProposalWithParamsContent = () => {
                           </span>
                         ),
                       }}
-                      scroll={{ x: "100%", y: "100%" }}
                       className="tw-h-full"
                       pagination={{
                         current: pageByTab["all"] || 1,
@@ -3112,7 +3254,6 @@ const ProposalWithParamsContent = () => {
                         },
                         // các props khác: total, pageSize, showSizeChanger,...
                       }}
-                      rowSelection={rowSelectionProposal}
                       onChange={(pagination, filters, sorter, extra) => {
                         // AntD Table tự gọi onChange khi:
                         // - chuyển trang
@@ -3175,7 +3316,7 @@ const ProposalWithParamsContent = () => {
                       </AnimatePresence>
                     </div>
                     <Table
-                      columns={column}
+                      {...tableLayoutProps}
                       dataSource={filterProposalsByConfig(configId).map(
                         (item, i) => ({
                           ...item,
@@ -3189,7 +3330,6 @@ const ProposalWithParamsContent = () => {
                           </span>
                         ),
                       }}
-                      scroll={{ x: "100%", y: "100%" }}
                       className="tw-h-full"
                       pagination={{
                         current: pageByTab[configId] || 1,
@@ -3209,7 +3349,6 @@ const ProposalWithParamsContent = () => {
                         },
                         // các props khác: total, pageSize, showSizeChanger,...
                       }}
-                      rowSelection={rowSelectionProposal}
                       onChange={(pagination, filters, sorter, extra) => {
                         // AntD Table tự gọi onChange khi:
                         // - chuyển trang
@@ -3298,3 +3437,9 @@ const ProposalWithParamsContent = () => {
 const ProposalWithParams = () => <ProposalWithParamsContent />;
 
 export default ProposalWithParams;
+
+// Tên đề xuất trong danh sách: đậm, không gạch chân (trước đây link xanh gạch chân trông rối)
+const PROPOSAL_LIST_CSS = `
+.fwp-name { font-weight: 500; color: #1f2937; text-decoration: none; line-height: 1.4; word-break: break-word; }
+a.fwp-name:hover { color: #1677ff; text-decoration: underline; }
+`;

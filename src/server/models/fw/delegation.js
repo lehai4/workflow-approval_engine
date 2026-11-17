@@ -214,7 +214,9 @@ const listDelegations = async ({ ma_nv, all }) => {
   );
   const now = moment();
   const typeNames = new Map(
-    (await mysql.query(`SELECT uid, name_proposal_type FROM config_proposal`)).map((t) => [t.uid, t.name_proposal_type]),
+    (
+      await mysql.query(`SELECT uid, name_proposal_type AS name, prefix_name_proposal_type AS prefix FROM config_proposal`)
+    ).map((t) => [t.uid, t.prefix ? `${t.name} (${t.prefix})` : t.name]),
   );
   return rows.map((d) => ({
     ...d,
@@ -341,6 +343,14 @@ const searchUsers = async (q, { inactive = false } = {}) => {
 };
 
 const listProposalTypes = () =>
-  mysql.query(`SELECT uid, name_proposal_type AS name FROM config_proposal WHERE status = 1 ORDER BY name_proposal_type`);
+  mysql.query(
+    // prefix (tiền tố số hiệu) + nhóm để phân biệt các loại trùng tên
+    `SELECT cp.uid, cp.name_proposal_type AS name, cp.prefix_name_proposal_type AS prefix,
+            gp.name_group_proposal_type AS group_name
+       FROM config_proposal cp
+       LEFT JOIN group_proposal gp ON gp.uid = cp.id_group_proposal
+      WHERE cp.status = 1
+      ORDER BY cp.name_proposal_type, cp.prefix_name_proposal_type`,
+  );
 
 module.exports = { listProposalTypes, syncDelegations, scheduleSync, listDelegations, createDelegation, cancelDelegation, searchUsers };

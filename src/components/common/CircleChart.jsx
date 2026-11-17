@@ -35,12 +35,8 @@ const CircleChart = ({ data }) => {
             cx={isMobile ? "50%" : "40%"}
             cy="50%"
             labelLine={false}
-            // Mobile: ẩn label text để tránh tràn màn hình, chỉ hiện ở Legend
-            label={
-              isMobile
-                ? false
-                : ({ name, value }) => (value > 0 ? `${name}: ${value}` : null)
-            }
+            // Không vẽ nhãn trên lát: Legend đã ghi "tên: số", nhãn lát bị cắt chữ khi khung hẹp
+            label={false}
             outerRadius={isMobile ? 80 : 80}
             innerRadius={isMobile ? 40 : 40}
             dataKey="value"

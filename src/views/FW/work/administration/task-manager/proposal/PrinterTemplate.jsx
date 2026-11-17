@@ -625,7 +625,7 @@ const PrinterTemplate = () => {
           <div className="tw-px-4 tw-py-4 sm:tw-px-6">
             <div className="tw-flex tw-flex-col md:tw-flex-row lg:tw-flex-row md:tw-justify-between lg:tw-justify-between tw-gap-4">
               {/* Tiêu đề luôn ở trên cùng */}
-              <h4 className="tw-text-xl tw-font-semibold tw-m-0">Đề xuất</h4>
+              <h4 className="tw-text-xl tw-font-semibold tw-m-0">Mẫu in đề xuất</h4>
 
               {/* Filters + Actions - Responsive siêu tốt */}
               <div className="tw-flex tw-flex-col md:tw-flex-row md:tw-items-center tw-gap-4">

@@ -15,6 +15,13 @@ export const metadata = {
   description: "Workflow & Approval Engine - đề xuất, quy trình duyệt, đặt tài nguyên",
 };
 
+// viewport-fit=cover: để env(safe-area-inset-*) có giá trị trên iOS (chừa chỗ thanh vuốt Home)
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+};
+
 export default function RootLayout({ children }) {
   return (
     <html lang="vi">

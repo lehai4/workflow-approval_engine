@@ -1516,9 +1516,9 @@ const ProposalType = () => {
                       const displayNames = peopleIds.map((id) => {
                         if (id === "any") return "Nhân viên bất kỳ";
                         if (id === "creator") return "Người tạo";
-                        return id;
-                        // const found = syncNV.find((nv) => nv.ma_nv === id);
-                        // return found ? found.ten_nv : "Không xác định";
+                        // Hiện tên thay vì mã NV (chưa tải xong danh sách nhân viên thì tạm hiện mã)
+                        const found = syncNV.find((nv) => nv.ma_nv === id);
+                        return found ? found.ten_nv : id;
                       });
 
                       return displayNames.length > 0

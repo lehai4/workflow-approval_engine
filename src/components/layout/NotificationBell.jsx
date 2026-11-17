@@ -298,6 +298,8 @@ const CSS = `
 .fwn-readall { padding-right: 0 !important; }
 .fwn-list { max-height: min(480px, 70vh); overflow-y: auto; overscroll-behavior: contain; }
 .fwn-mobile .fwn-list { max-height: none; flex: 1; }
+/* iOS: chừa chỗ cho thanh vuốt Home ở đáy màn hình (danh sách là phần cuối của ngăn kéo) */
+.fwn-mobile .fwn-list:last-child { padding-bottom: env(safe-area-inset-bottom); }
 .fwn-empty { padding: 36px 0; display: flex; justify-content: center; }
 .fwn-group { font-size: 12px; font-weight: 500; color: #898781; padding: 10px 16px 4px; position: sticky; top: 0; background: #fff; z-index: 1; }
 .fwn-item { all: unset; box-sizing: border-box; width: 100%; display: flex; align-items: flex-start; gap: 12px; padding: 10px 16px; cursor: pointer; position: relative; transition: background .12s; }

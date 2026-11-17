@@ -36,7 +36,7 @@ const FilterGroup = ({
   state,
 }) => (
   <div
-    className={`tw-flex ${isMobile ? "tw-flex-col tw-gap-4" : "tw-flex-row tw-items-center tw-gap-2"}`}
+    className={`tw-flex ${isMobile ? "tw-flex-col tw-gap-4" : "tw-flex-row tw-flex-wrap tw-items-center tw-gap-2"}`}
   >
     <Input
       placeholder="Tìm tên đề xuất..."
@@ -116,16 +116,8 @@ const FilterGroup = ({
       className={isMobile ? "tw-w-full" : "tw-w-[240px]"}
     />
 
-    {!isMobile ? (
-      <div className="tw-flex tw-gap-1">
-        <Tooltip title="Tải lại">
-          <Button icon={<ReloadOutlined />} onClick={reloadOnData} />
-        </Tooltip>
-        <Tooltip title="Xuất Excel">
-          <Button icon={<SaveOutlined />} onClick={handleExportExcel} />
-        </Tooltip>
-      </div>
-    ) : (
+    {/* Desktop: nút Tải lại / Xuất Excel nằm ở hàng tiêu đề (ProposalHeader) */}
+    {isMobile && (
       <>
         <Button
           icon={<ReloadOutlined />}
@@ -206,33 +198,27 @@ const ProposalHeader = ({
   return (
     <div className="tw-flex tw-flex-col tw-shrink-0 tw-bg-white tw-shadow-sm">
       <div
-        className="tw-flex md:tw-flex-col lg:tw-flex-row lg:tw-items-center tw-justify-between tw-p-2"
+        // Hàng 1: tiêu đề + nút thao tác; hàng 2 (desktop): ô lọc, tự xuống dòng khi màn hẹp
+        // (trước đây cùng một hàng nên ở 1366-1536px dãy lọc tràn ra ngoài, che nút Thêm mới)
+        className="tw-flex tw-flex-col tw-gap-2 tw-p-2"
         style={{ borderBottom: "1px solid #f0f0f0" }}
       >
+       <div className="tw-flex tw-items-center tw-justify-between tw-gap-2">
         <span className="tw-font-semibold tw-text-lg tw-whitespace-nowrap tw-mr-2">
           {isMobile ? "Đề xuất" : "Danh sách đề xuất"}
         </span>
 
         <div className="tw-flex tw-items-center tw-gap-2">
           {!isMobile && (
-            <FilterGroup
-              isMobile={isMobile}
-              search={search}
-              setSearch={setSearch}
-              allProposalType={allProposalType}
-              setActiveTabKey={setActiveTabKey}
-              onRangeChange={onRangeChange}
-              rangePresets={rangePresets}
-              reloadOnData={reloadOnData}
-              handleExportExcel={handleExportExcel}
-              type={type}
-              setOpen={setOpen}
-              closeDrawerIfMobile={closeDrawerIfMobile}
-              setOpenDrawer={setOpenDrawer}
-              state={state}
-            />
+            <>
+              <Tooltip title="Tải lại">
+                <Button icon={<ReloadOutlined />} onClick={reloadOnData} />
+              </Tooltip>
+              <Tooltip title="Xuất Excel">
+                <Button icon={<SaveOutlined />} onClick={handleExportExcel} />
+              </Tooltip>
+            </>
           )}
-
           {/* Nút Xóa lọc Desktop: Hiện icon cho tinh tế */}
           {!isMobile && filterCount > 0 && (
             <Tooltip title="Xóa tất cả lọc">
@@ -265,6 +251,26 @@ const ProposalHeader = ({
             </Button>
           )}
         </div>
+       </div>
+
+        {!isMobile && (
+          <FilterGroup
+            isMobile={isMobile}
+            search={search}
+            setSearch={setSearch}
+            allProposalType={allProposalType}
+            setActiveTabKey={setActiveTabKey}
+            onRangeChange={onRangeChange}
+            rangePresets={rangePresets}
+            reloadOnData={reloadOnData}
+            handleExportExcel={handleExportExcel}
+            type={type}
+            setOpen={setOpen}
+            closeDrawerIfMobile={closeDrawerIfMobile}
+            setOpenDrawer={setOpenDrawer}
+            state={state}
+          />
+        )}
       </div>
 
       <Drawer

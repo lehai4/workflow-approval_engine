@@ -23,6 +23,7 @@ import {
   Space,
   Spin,
   Table,
+  Tag,
   Typography,
   message,
 } from "antd";
@@ -835,7 +836,19 @@ const DashBoardOffice = () => {
                 </Card>
               </Col>
               <Col xs={24} sm={24} md={12}>
-                <Card title="Tôi cần duyệt" style={{ minHeight: 340 }}>
+                {/* Biểu đồ đếm MỌI đăng ký tôi tham gia duyệt; nhãn góc phải ghi số đang chờ tôi */}
+                <Card
+                  title="Đăng ký tôi tham gia duyệt"
+                  style={{ minHeight: 340 }}
+                  extra={(() => {
+                    const pending = Number(state?.totalChartApprovedFlowByMaNV?.["Đang chờ duyệt"]) || 0;
+                    return pending > 0 ? (
+                      <Tag color="orange">Đang chờ bạn: {pending}</Tag>
+                    ) : (
+                      <Tag color="green">Không có việc chờ</Tag>
+                    );
+                  })()}
+                >
                   {(() => {
                     const totalCount = Object.values(
                       state?.totalChartApprovedFlowByMaNV || {},
@@ -879,6 +892,7 @@ const DashBoardOffice = () => {
           <div className="tw-m-2">
             <Row gutter={16} className="tw-gap-y-4">
               <Col xs={24} sm={24} md={12}>
+                <Card size="small" title="Đăng ký của tôi" styles={{ body: { padding: 0 } }}>
                 <Table
                   columns={[
                     {
@@ -892,8 +906,7 @@ const DashBoardOffice = () => {
                         title: "Mục đích đăng ký",
                         key: "purpose",
                         dataIndex: "purpose",
-                        width: 400,
-                        ellipsis: false,
+                        ellipsis: true,
                         render: (data, record) => {
                           return (
                             <Link
@@ -956,10 +969,14 @@ const DashBoardOffice = () => {
                   locale={{
                     emptyText: "Không có dữ liệu.",
                   }}
-                  scroll={{ x: "max-content", y: 50 * 5 }}
+                  // không cuộn ngang: cột mục đích tự co, cắt bằng "..."
+                  scroll={{ y: 50 * 5 }}
+                  size="middle"
                 />
+                </Card>
               </Col>
               <Col xs={24} sm={24} md={12}>
+                <Card size="small" title="Đăng ký cần tôi duyệt" styles={{ body: { padding: 0 } }}>
                 <Table
                   columns={[
                     {
@@ -973,8 +990,7 @@ const DashBoardOffice = () => {
                         title: "Mục đích đăng ký",
                         key: "purpose",
                         dataIndex: "purpose",
-                        width: 400,
-                        ellipsis: false,
+                        ellipsis: true,
                         render: (data, record) => {
                           return (
                             <Link
@@ -1038,8 +1054,11 @@ const DashBoardOffice = () => {
                   locale={{
                     emptyText: "Không có dữ liệu.",
                   }}
-                  scroll={{ x: "max-content", y: 50 * 5 }}
+                  // không cuộn ngang: cột mục đích tự co, cắt bằng "..."
+                  scroll={{ y: 50 * 5 }}
+                  size="middle"
                 />
+                </Card>
               </Col>
             </Row>
           </div>

@@ -29,6 +29,91 @@ import dayjs from "dayjs";
 import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import { shallowEqual, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
+
+// ---- Ô "Trao đổi gần đây": mỗi dòng là một tin nhắn (avatar chữ cái, tên + giờ, bong bóng nội dung, link đề xuất) ----
+const AVATAR_COLORS = ["#1677ff", "#13a8a8", "#722ed1", "#fa8c16", "#eb2f96", "#52c41a", "#2f54eb"];
+const initialOf = (name = "") => (String(name).trim().split(/\s+/).pop() || "?").charAt(0).toUpperCase();
+const colorOf = (key = "") => AVATAR_COLORS[[...String(key)].reduce((a, c) => a + c.charCodeAt(0), 0) % AVATAR_COLORS.length];
+// Làm nổi phần nhắc tên "@PHÒNG X (TÊN)" trong nội dung
+const MentionText = ({ text }) =>
+  String(text || "")
+    .split(/(@[^@()\n]*\([^)]*\))/g)
+    .map((part, i) =>
+      part.startsWith("@") ? (
+        <span key={i} style={{ color: "#1677ff", fontWeight: 500 }}>
+          {part}
+        </span>
+      ) : (
+        <span key={i}>{part}</span>
+      ),
+    );
+const shortTime = (d) => {
+  const t = dayjs(d);
+  if (!t.isValid()) return "";
+  if (t.isSame(dayjs(), "day")) return t.format("HH:mm");
+  if (t.isSame(dayjs().subtract(1, "day"), "day")) return `Hôm qua ${t.format("HH:mm")}`;
+  return t.format(t.isSame(dayjs(), "year") ? "DD/MM HH:mm" : "DD/MM/YYYY");
+};
+const MessageRow = ({ item, senderName, senderDept, isMe, link }) => (
+  <div className="tw-flex tw-gap-3 tw-w-full tw-min-w-0">
+    <Avatar
+      size={34}
+      style={{ background: isMe ? "#1677ff" : colorOf(item.id_people_sender), flex: "none", fontWeight: 600 }}
+    >
+      {isMe ? "Tôi" : initialOf(senderName)}
+    </Avatar>
+    <div className="tw-flex tw-flex-col tw-gap-1 tw-min-w-0 tw-flex-1">
+      <div className="tw-flex tw-items-baseline tw-gap-2 tw-min-w-0">
+        <span className="tw-font-semibold tw-truncate" style={{ fontSize: 14, color: "#1f1f1f" }}>
+          {isMe ? "Bạn" : senderName || item.id_people_sender}
+        </span>
+        <span className="tw-shrink-0" style={{ fontSize: 12, color: "#8c8c8c" }} title={formatDateNotSecond(item.created_at)}>
+          {shortTime(item.created_at)}
+        </span>
+      </div>
+      {!isMe && senderDept && (
+        <span className="tw-truncate" style={{ fontSize: 12, color: "#8c8c8c", marginTop: -4 }}>
+          {senderDept}
+        </span>
+      )}
+      <div
+        style={{
+          background: "#f5f5f5",
+          borderRadius: "4px 12px 12px 12px",
+          padding: "6px 10px",
+          fontSize: 13,
+          lineHeight: 1.5,
+          color: "#262626",
+          wordBreak: "break-word",
+          display: "-webkit-box",
+          WebkitLineClamp: 3,
+          WebkitBoxOrient: "vertical",
+          overflow: "hidden",
+        }}
+      >
+        <MentionText text={item.message} />
+      </div>
+      <span className="tw-truncate" style={{ fontSize: 12, color: "#8c8c8c" }}>
+        trên {item.reality_type === "Proposal" ? "đề xuất" : "đăng ký"}{" "}
+        <Link to={link} target="_blank" className="tw-no-underline hover:tw-underline" style={{ fontWeight: 500 }}>
+          {item.name_data}
+        </Link>
+      </span>
+    </div>
+  </div>
+);
+
+// Đã chờ bao lâu kể từ lúc tới lượt mình duyệt -> nhãn + màu (xám < 3 ngày, cam 3-7 ngày, đỏ > 7 ngày)
+const waitingInfo = (since) => {
+  const t = dayjs(since);
+  if (!since || !t.isValid()) return null;
+  const hours = dayjs().diff(t, "hour");
+  const days = Math.floor(hours / 24);
+  const label = hours < 1 ? "Vừa tới lượt" : days < 1 ? `Chờ ${hours} giờ` : `Chờ ${days} ngày`;
+  if (days > 7) return { label, color: "#cf1322", bg: "#fff1f0", border: "#ffccc7" };
+  if (days >= 3) return { label, color: "#d46b08", bg: "#fff7e6", border: "#ffd591" };
+  return { label, color: "#595959", bg: "#f5f5f5", border: "#e8e8e8" };
+};
 import { toast } from "react-toastify";
 
 const ApprovalCard = ({
@@ -41,6 +126,8 @@ const ApprovalCard = ({
   getLink,
   getTitle,
   getDescription,
+  getSub, // dòng phụ dưới tiêu đề: loại đề xuất / tài nguyên + giờ đặt
+  renderContent, // tự vẽ cả dòng (ô Trao đổi gần đây)
   isMessage = false,
 }) => {
   return (
@@ -78,7 +165,9 @@ const ApprovalCard = ({
             itemLayout="horizontal"
             dataSource={data}
             loading={loading}
-            renderItem={(item) => (
+            renderItem={(item) => {
+              const wait = isMessage ? null : waitingInfo(item.waiting_since || item.created_at);
+              return (
               <List.Item
                 style={{
                   padding: "10px 0",
@@ -87,6 +176,8 @@ const ApprovalCard = ({
                 }}
               >
                 <Skeleton avatar title={false} loading={item.loading} active>
+                  {renderContent ? renderContent(item) : (
+                  <>
                   <List.Item.Meta
                     avatar={
                       <Avatar
@@ -94,10 +185,10 @@ const ApprovalCard = ({
                         src={item.avatar} // Nếu có thì hiện ảnh
                         icon={!item.avatar ? <ClockCircleOutlined /> : null} // Không có ảnh thì hiện icon đồng hồ
                         style={{
-                          // Nếu không có avatar, đổi sang màu vàng nhạt (warning) và icon màu cam
-                          backgroundColor: !item.avatar ? "#fffbe6" : "#e6f7ff",
-                          color: !item.avatar ? "#faad14" : "#1890ff",
-                          border: !item.avatar ? "1px solid #ffe58f" : "none",
+                          // Cần duyệt: màu theo thời gian đã chờ (xám / cam / đỏ); trao đổi: vàng như cũ
+                          backgroundColor: !item.avatar ? wait?.bg || "#fffbe6" : "#e6f7ff",
+                          color: !item.avatar ? wait?.color || "#faad14" : "#1890ff",
+                          border: !item.avatar ? `1px solid ${wait?.border || "#ffe58f"}` : "none",
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
@@ -120,29 +211,58 @@ const ApprovalCard = ({
                     }
                     description={
                       !isMessage ? (
-                        <span style={{ fontSize: "13px", color: "#595959" }}>
-                          {getDescription(item)}
-                        </span>
+                        // Bỏ cột ngày bên phải (làm tên xuống 3 dòng): loại / ngày / thời gian chờ xếp bên dưới tên
+                        <div className="tw-flex tw-flex-col tw-gap-1">
+                          {getSub?.(item) && (
+                            <span style={{ fontSize: 12, color: "#8c8c8c" }}>{getSub(item)}</span>
+                          )}
+                          <div className="tw-flex tw-flex-wrap tw-items-center tw-gap-x-2 tw-gap-y-1" style={{ fontSize: 13, color: "#595959" }}>
+                            <span>
+                              {getDescription(item)}
+                              <span style={{ color: "#bfbfbf" }}> · </span>
+                              <span style={{ color: "#8c8c8c", fontSize: 12 }}>{formatDateNotSecond(item.created_at)}</span>
+                            </span>
+                            {wait && (
+                              <span
+                                style={{
+                                  fontSize: 12,
+                                  lineHeight: "18px",
+                                  padding: "0 8px",
+                                  borderRadius: 10,
+                                  color: wait.color,
+                                  background: wait.bg,
+                                  border: `1px solid ${wait.border}`,
+                                }}
+                              >
+                                {wait.label}
+                              </span>
+                            )}
+                          </div>
+                        </div>
                       ) : (
                         getDescription(item)
                       )
                     }
                   />
-                  <div style={{ fontSize: "12px", color: "#8c8c8c" }}>
-                    {formatDateNotSecond(item.created_at)}
-                  </div>
+                  {isMessage && (
+                    <div style={{ fontSize: "12px", color: "#8c8c8c" }}>
+                      {formatDateNotSecond(item.created_at)}
+                    </div>
+                  )}
+                  </>
+                  )}
                 </Skeleton>
               </List.Item>
-            )}
+              );
+            }}
           />
 
           {loadMore && (
             <div
               style={{
                 textAlign: "center",
-                padding: "12px 0 16px",
-                borderTop: "1px solid #f0f0f0",
-                marginTop: 8,
+                padding: "4px 0 12px", // không kẻ thêm: dòng cuối danh sách đã có đường kẻ
+                marginTop: 0,
               }}
             >
               {loadMore}
@@ -1496,6 +1616,7 @@ const FW = () => {
                           `work/request/?view=list&type=dashboard&uid=${item.uid}`
                         }
                         getTitle={(item) => item.name_proposal_reality}
+                        getSub={(item) => item.loai_de_xuat}
                         getDescription={(item) =>
                           state.syncNV.find((s) => s.ma_nv === item.created_by)
                             ?.ten_nv || ""
@@ -1516,6 +1637,15 @@ const FW = () => {
                           `office/booking/?view=booking&group=${item.code_group_resource}&resource=${item.code_resource_environment}&uid=${item.uid}`
                         }
                         getTitle={(item) => item.purpose}
+                        getSub={(item) =>
+                          [
+                            item.name_resource_environment,
+                            item.time_start &&
+                              `${dayjs(item.time_start).format("HH:mm")}–${dayjs(item.time_end).format("HH:mm DD/MM")}`,
+                          ]
+                            .filter(Boolean)
+                            .join(" · ")
+                        }
                         getDescription={(item) =>
                           state.syncNV.find((s) => s.ma_nv === item.created_by)
                             ?.ten_nv || ""
@@ -1536,6 +1666,22 @@ const FW = () => {
                           `office/booking/?view=booking&group=${item.code_group_resource}&resource=${item.code_resource_environment}&uid=${item.uid}`
                         }
                         isMessage
+                        renderContent={(item) => {
+                          const info = state.syncNV.find((sync) => sync.ma_nv === item.id_people_sender);
+                          return (
+                            <MessageRow
+                              item={item}
+                              isMe={item.id_people_sender === ma_nv}
+                              senderName={info?.ten_nv}
+                              senderDept={info?.ten_phong_ban}
+                              link={
+                                item.reality_type === "Proposal"
+                                  ? `work/request/?view=list&type=all&uid=${item.uid_reference}`
+                                  : `office/booking/?view=booking&group=${item.code_group_resource}&resource=${item.code_resource_environment}&uid=${item.uid_reference}`
+                              }
+                            />
+                          );
+                        }}
                         getTitle={(item) => {
                           let info = state.syncNV.find(
                             (sync) => sync.ma_nv === item.id_people_sender,

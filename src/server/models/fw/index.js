@@ -1405,6 +1405,7 @@ const fwModel = {
             pr.created_at,
             pr.id_department,
             pr.status,
+            pr.approval_level, -- bước hiện tại (thẻ danh sách trên điện thoại: "Đang chờ: ... · Bước N")
             pr.id_config_proposal,
             COALESCE(pah.is_hidden, 0) AS hiddenByAdmin,
             pah.hidden_at AS hiddenAt,
@@ -7855,7 +7856,14 @@ const fwModel = {
             pr.name_proposal_reality,
             pr.created_at,
             pr.created_by,
-            cp.name_proposal_type AS loai_de_xuat
+            cp.name_proposal_type AS loai_de_xuat,
+            -- Thời điểm tới lượt mình duyệt: lúc bước trước được duyệt (created_at = lúc thao tác), bước đầu = ngày tạo
+            COALESCE(
+              (SELECT MAX(prev.created_at) FROM approval_flow_reality prev
+                WHERE prev.uid_proposal_reality = pr.uid AND prev.is_flow = 1
+                  AND prev.step_flow = pr.approval_level - 1 AND prev.is_approval_flow = 1),
+              pr.created_at
+            ) AS waiting_since
         --     creator.full_name AS nguoi_tao,
             -- ROW_NUMBER() OVER (ORDER BY pr.created_at DESC) AS stt
         FROM proposal_reality pr
@@ -7960,8 +7968,18 @@ const fwModel = {
         gr.code_group_resource,
         er.purpose,
         er.created_at,
-        er.created_by
-        -- ROW_NUMBER() OVER (ORDER BY er.uid) AS stt 
+        er.created_by,
+        -- Trang Tổng hợp: tên tài nguyên + khung giờ đặt + thời điểm tới lượt mình duyệt
+        re.name_resource_environment,
+        er.time_start,
+        er.time_end,
+        COALESCE(
+          (SELECT MAX(prev.created_at) FROM approval_flow_reality_resource_environment prev
+            WHERE prev.uid_environment_reality = er.uid
+              AND prev.step_flow = er.approval_level - 1 AND prev.is_approval_flow = 1),
+          er.created_at
+        ) AS waiting_since
+        -- ROW_NUMBER() OVER (ORDER BY er.uid) AS stt
         FROM environment_reality er
         LEFT JOIN resource_environment re on er.uid_resource_environment = re.uid
         LEFT JOIN group_resource gr on er.uid_group_resource = gr.uid

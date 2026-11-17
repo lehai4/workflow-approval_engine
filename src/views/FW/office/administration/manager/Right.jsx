@@ -7,12 +7,14 @@ import {
   Col,
   Collapse,
   Divider,
+  Empty,
   Flex,
   Input,
   Row,
   Space,
   Spin,
   Table,
+  Tag,
   Tree,
 } from "antd";
 import { Fragment, useEffect, useReducer, useRef, useState } from "react";
@@ -41,6 +43,9 @@ const Right = () => {
   const [checkedKeys, setCheckedKeys] = useState([]);
   const [infoTreeDataFeature, setInfoTreeDataFeature] = useState([]);
   const [selectedRowKey, setSelectedRowKey] = useState(null);
+  // Người đang được chỉnh quyền (hiện ở tiêu đề ô Chức năng); điện thoại: chọn xong cuộn tới ô này
+  const [selectedName, setSelectedName] = useState("");
+  const featureCardRef = useRef(null);
   const [search, setSearch] = useState({
     roleId: "all",
     status: "all",
@@ -48,43 +53,37 @@ const Right = () => {
     ten_nv: null,
   });
 
+  // Tên + mã nhân viên ở cột đầu (trước đây tên nằm cuối, bị cắt / phải cuộn ngang mới thấy)
   const columns = [
     {
-      key: "status",
-      title: "Trạng thái",
-      dataIndex: "status",
-      width: 150,
-      ellipsis: false,
-      render: (text) => {
-        return <>{text === 1 ? "Hoạt động" : "Đã khóa"}</>;
-      },
+      key: "display_name",
+      title: "Nhân viên",
+      dataIndex: "display_name",
+      render: (text, record) => (
+        <div className="tw-flex tw-flex-col tw-leading-tight tw-min-w-0">
+          <span className="tw-font-medium tw-break-words">{text}</span>
+          <span className="tw-text-xs tw-text-gray-500">{record.ma_nv}</span>
+        </div>
+      ),
     },
     {
       key: "uid_permission",
       title: "Chức danh",
       dataIndex: "uid_permission",
-      width: 150,
-      ellipsis: false,
+      width: 130,
+      ellipsis: true,
       render: (text) => {
         const info = state.permissions.find((item) => item.uid === text);
         return info ? info.name_permission : "Chức danh không phù hợp";
       },
     },
     {
-      key: "ma_nv",
-      title: "Mã nhân viên",
-      dataIndex: "ma_nv",
-      width: 150,
-      ellipsis: false,
-      render: (text) => text,
-    },
-    {
-      key: "display_name",
-      title: "Tên nhân viên",
-      dataIndex: "display_name",
-      width: 190,
-      ellipsis: true,
-      render: (text) => text,
+      key: "status",
+      title: "Trạng thái",
+      dataIndex: "status",
+      width: 110,
+      render: (text) =>
+        text === 1 ? <Tag color="green">Hoạt động</Tag> : <Tag>Đã khóa</Tag>,
     },
   ];
 
@@ -707,12 +706,20 @@ const Right = () => {
                         emptyText: "Không có dữ liệu.",
                       }}
                       // scroll={{ x: "max-content", y: 50 * 5 }}
-                      scroll={{ x: "max-content" }}
+                      size="middle"
+                      tableLayout="fixed"
                       onRow={(record) => ({
                         onClick: () => {
                           if (isRowClickable(record)) {
                             setSelectedRowKey(record.key);
+                            setSelectedName(record.display_name || record.ma_nv);
                             handleGetAccessByUserId(record);
+                            if (window.innerWidth < 768) {
+                              setTimeout(
+                                () => featureCardRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }),
+                                300,
+                              );
+                            }
                           }
                         },
                         className: isRowClickable(record)
@@ -725,7 +732,8 @@ const Right = () => {
                   </Card>
                 </Col>
                 <Col xs={24} sm={24} md={10}>
-                  <Card title="Chức năng">
+                  <div ref={featureCardRef} />
+                  <Card title={selectedName ? `Chức năng · ${selectedName}` : "Chức năng"}>
                     {infoTreeDataFeature.length > 0 ? (
                       <Fragment>
                         <Space direction="vertical" className="tw-w-full">
@@ -779,7 +787,14 @@ const Right = () => {
                         </Space>
                       </Fragment>
                     ) : (
-                      <div>Chưa có dữ liệu</div>
+                      <Empty
+                        image={Empty.PRESENTED_IMAGE_SIMPLE}
+                        description={
+                          selectedRowKey
+                            ? "Người dùng này chưa có chức năng nào"
+                            : "Chọn một người dùng trong danh sách để xem và chỉnh quyền"
+                        }
+                      />
                     )}
                   </Card>
                 </Col>

@@ -61,7 +61,17 @@ const CreateForm = ({ onCreated }) => {
   useEffect(() => {
     httpConnect
       .get("/fw/delegation/proposal-types")
-      .then((r) => setTypeOptions((r.data || []).map((t) => ({ value: t.uid, label: t.name }))))
+      .then((r) =>
+        setTypeOptions(
+          (r.data || []).map((t) => ({
+            value: t.uid,
+            // tiền tố số hiệu phân biệt các loại trùng tên (vd nhiều loại "BẢNG ĐỀ NGHỊ THANH TOÁN")
+            label: t.prefix ? `${t.name} (${t.prefix})` : t.name,
+            name: t.name,
+            sub: [t.prefix, t.group_name].filter(Boolean).join(" · "),
+          })),
+        ),
+      )
       .catch(() => setTypeOptions([]));
   }, []);
   const [reason, setReason] = useState("");
@@ -144,6 +154,12 @@ const CreateForm = ({ onCreated }) => {
               options={typeOptions}
               placeholder="Tất cả loại đề xuất (để trống)"
               optionFilterProp="label"
+              optionRender={(o) => (
+                <span className="fwd-opt">
+                  <span>{o.data.name}</span>
+                  {o.data.sub && <span className="fwd-opt-sub">{o.data.sub}</span>}
+                </span>
+              )}
               maxTagCount="responsive"
               className="fwd-full"
             />
@@ -325,6 +341,8 @@ const CSS = `
 .fwd-label { font-size: 13px; color: #52514e; font-weight: 500; }
 .fwd-help { font-size: 12px; color: #898781; }
 .fwd-full { width: 100%; }
+.fwd-opt { display: inline-flex; flex-direction: column; line-height: 1.25; padding: 2px 0; }
+.fwd-opt-sub { font-size: 12px; color: #898781; }
 .fwd-opt { display: inline-flex; flex-direction: column; line-height: 1.25; padding: 2px 0; }
 .fwd-opt-sub { font-size: 12px; color: #898781; }
 .fwd-actions { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 16px; flex-wrap: wrap; }

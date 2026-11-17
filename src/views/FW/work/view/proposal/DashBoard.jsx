@@ -2181,7 +2181,20 @@ const DashBoardWork = () => {
                   </Card>
                 </Col>
                 <Col xs={24} sm={24} md={12}>
-                  <Card title="Tôi cần duyệt" style={{ minHeight: 340 }}>
+                  {/* Biểu đồ đếm MỌI đề xuất tôi tham gia duyệt (đã duyệt / từ chối / đang chờ) - trước đây
+                      tiêu đề "Tôi cần duyệt" dễ hiểu nhầm là còn việc; nhãn góc phải ghi số đang chờ tôi */}
+                  <Card
+                    title="Đề xuất tôi tham gia duyệt"
+                    style={{ minHeight: 340 }}
+                    extra={(() => {
+                      const pending = Number(state.totalChartApprovedFlowByMaNV?.["Đang chờ duyệt"]) || 0;
+                      return pending > 0 ? (
+                        <Tag color="orange">Đang chờ bạn: {pending}</Tag>
+                      ) : (
+                        <Tag color="green">Không có việc chờ</Tag>
+                      );
+                    })()}
+                  >
                     {(() => {
                       const totalCount = Object.values(
                         state.totalChartApprovedFlowByMaNV || {},
@@ -2225,6 +2238,7 @@ const DashBoardWork = () => {
             <div className="tw-m-2">
               <Row gutter={16} className="tw-gap-y-4">
                 <Col xs={24} sm={24} md={12}>
+                  <Card size="small" title="Đề xuất của tôi" styles={{ body: { padding: 0 } }}>
                   <Table
                     columns={[
                       {
@@ -2238,8 +2252,7 @@ const DashBoardWork = () => {
                         title: "Tên đề xuất",
                         key: "name_proposal_reality",
                         dataIndex: "name_proposal_reality",
-                        width: 500,
-                        ellipsis: false,
+                        ellipsis: true,
                         render: (data, record) => {
                           return (
                             <>
@@ -2262,7 +2275,7 @@ const DashBoardWork = () => {
                         title: "Ngày đề xuất",
                         key: "created_at",
                         dataIndex: "created_at",
-                        width: 200,
+                        width: 150,
                         ellipsis: false,
                         render: (text) => <>{formatDateNotSecond(text)}</>,
                       },
@@ -2277,10 +2290,15 @@ const DashBoardWork = () => {
                     locale={{
                       emptyText: "Không có dữ liệu.",
                     }}
-                    scroll={{ x: "max-content", y: 50 * 5 }}
+                    // không cuộn ngang: cột tên tự co và cắt bằng "..."
+                    scroll={{ y: 50 * 5 }}
+                    size="middle"
+                    pagination={false}
                   />
+                  </Card>
                 </Col>
                 <Col xs={24} sm={24} md={12}>
+                  <Card size="small" title="Đề xuất cần tôi duyệt" styles={{ body: { padding: 0 } }}>
                   <Table
                     columns={[
                       {
@@ -2294,8 +2312,7 @@ const DashBoardWork = () => {
                         title: "Tên đề xuất",
                         key: "name_proposal_reality",
                         dataIndex: "name_proposal_reality",
-                        width: 300,
-                        ellipsis: false,
+                        ellipsis: true,
                         render: (data, record) => {
                           return (
                             <>
@@ -2334,7 +2351,7 @@ const DashBoardWork = () => {
                         title: "Ngày đề xuất",
                         key: "created_at",
                         dataIndex: "created_at",
-                        width: 200,
+                        width: 150,
                         ellipsis: false,
                         render: (text) => <>{formatDateNotSecond(text)}</>,
                       },
@@ -2351,8 +2368,12 @@ const DashBoardWork = () => {
                     locale={{
                       emptyText: "Không có dữ liệu.",
                     }}
-                    scroll={{ x: "max-content", y: 50 * 5 }}
+                    // không cuộn ngang: cột tên tự co và cắt bằng "..."
+                    scroll={{ y: 50 * 5 }}
+                    size="middle"
+                    pagination={false}
                   />
+                  </Card>
                 </Col>
               </Row>
             </div>

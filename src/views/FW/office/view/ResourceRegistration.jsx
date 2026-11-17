@@ -1,6 +1,7 @@
 import { fwHttp } from "@/api/fwHttp";
 import {
   ClockCircleTwoTone,
+  FilterOutlined,
   LeftOutlined,
   LoadingOutlined,
   PlusOutlined,
@@ -8,9 +9,11 @@ import {
   RightOutlined,
 } from "@ant-design/icons";
 import {
+  Badge,
   Button,
   Col,
   Divider,
+  Grid,
   Flex,
   Form,
   Row,
@@ -56,6 +59,9 @@ const ResourceRegistration = () => {
     isUpdating: false,
     isLoading: false,
   });
+  // Điện thoại: ô lọc Vai trò / Trạng thái ẩn sau nút lọc để lịch không bị đẩy xuống
+  const isMobile = !Grid.useBreakpoint().md;
+  const [showFilters, setShowFilters] = useState(false);
   const [search, setSearch] = useState({
     status: null,
     role: null,
@@ -554,6 +560,16 @@ const ResourceRegistration = () => {
   const [matrix, setMatrix] = useState({ header: [], rows: [] });
   const [date, setDate] = useState(null);
   const [alignValue, setAlignValue] = useState("NGÀY");
+  // Xem theo NGÀY: lưới 24 cột giờ bắt đầu từ 00:00 -> tự cuộn ngang tới 07:00 (giờ làm việc)
+  const gridScrollRef = useRef(null);
+  useEffect(() => {
+    const box = gridScrollRef.current;
+    if (!box || alignValue !== "NGÀY" || matrix.header.length !== 24) return;
+    const ths = box.querySelectorAll("thead th");
+    const first = ths[0];
+    const target = ths[1 + 7];
+    if (first && target) box.scrollLeft = Math.max(0, target.offsetLeft - first.offsetWidth);
+  }, [alignValue, matrix.header.length, date]);
   const [itemEn, setItemEn] = useState([]);
   const [open, setOpen] = useState(false);
   const [modalWidth, setModalWidth] = useState("60%");
@@ -1667,24 +1683,83 @@ const ResourceRegistration = () => {
         </div>
       )}
       <div
-        className="tw-flex tw-flex-col md:tw-flex-row lg:tw-flex-row tw-items-start lg:tw-items-center tw-justify-between tw-gap-2 tw-bg-white tw-p-2 tw-shadow-sm"
+        className="tw-bg-white tw-p-2 tw-shadow-sm"
         style={{
           borderBottom: "0.1px solid #8080803b",
           position: "relative",
         }}
       >
-        {/* Chọn danh sách tài nguyên */}
-        {renderName()}
-        <Divider className="tw-my-2 tw-block sm:tw-h md:tw-hidden lg:tw-hidden" />
-
-        <div className="tw-inline-flex tw-flex-1 tw-w-full tw-flex-col md:tw-flex-row lg:tw-flex-row tw-justify-end tw-gap-2">
-          <Button icon={<ReloadOutlined />} onClick={() => reloadOnData()}>
-            Tải lại
-          </Button>
+        {/* Một hàng: tên nhóm/tài nguyên + nút; điện thoại chỉ hiện biểu tượng, lọc mở thêm hàng bên dưới */}
+        <div className="tw-flex tw-items-center tw-justify-between tw-gap-2">
+          {renderName()}
+          <div className="tw-flex tw-items-center tw-justify-end tw-gap-2 tw-ml-auto">
+            <Button icon={<ReloadOutlined />} onClick={() => reloadOnData()} aria-label="Tải lại">
+              {!isMobile && "Tải lại"}
+            </Button>
+            {isMobile ? (
+              <Badge dot={!!(search.role || search.status)} offset={[-2, 2]}>
+                <Button
+                  icon={<FilterOutlined />}
+                  type={showFilters ? "primary" : "default"}
+                  ghost={showFilters}
+                  onClick={() => setShowFilters((v) => !v)}
+                  aria-label="Bộ lọc"
+                />
+              </Badge>
+            ) : (
+              <>
+                <Select
+                  placeholder="Vai trò"
+                  value={search.role ?? undefined}
+                  onChange={(e) => setSearch((prev) => ({ ...prev, role: e }))}
+                  className={isMobile ? "tw-flex-1 tw-min-w-0" : "tw-w-[150px]"}
+                  allowClear
+                >
+                  <Select.Option value="register">Tôi đăng ký</Select.Option>
+                  <Select.Option value="approve">Tôi phê duyệt</Select.Option>
+                  <Select.Option value="takepartin">Tôi tham gia</Select.Option>
+                </Select>
+                <Select
+                  placeholder="Trạng thái"
+                  value={search.status ?? undefined}
+                  onChange={(e) => setSearch((prev) => ({ ...prev, status: e }))}
+                  className={isMobile ? "tw-flex-1 tw-min-w-0" : "tw-w-[150px]"}
+                  allowClear
+                >
+                  {/* <Select.Option value="draft">Nháp</Select.Option> */}
+                  <Select.Option value="waiting">Đang chờ duyệt</Select.Option>
+                  <Select.Option value="approved">Đã phê duyệt</Select.Option>
+                  <Select.Option value="rejected">Đã từ chối</Select.Option>
+                  <Select.Option value="canceled">Hủy</Select.Option>
+                </Select>
+              </>
+            )}
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
+              aria-label="Thêm đăng ký"
+              onClick={() => {
+                if (state?.userFeature?.includes("BOOKING_CREATE")) {
+                  setOpen(true);
+                } else {
+                  toast.error(
+                    `🚫 Bạn không có quyền đăng ký. 
+                                                                          Vui lòng liên hệ Quản trị viên mở quyền!`
+                  );
+                }
+              }}
+            >
+              {!isMobile && "Thêm đăng ký"}
+            </Button>
+          </div>
+        </div>
+        {isMobile && showFilters && (
+          <div className="tw-flex tw-gap-2 tw-mt-2">
           <Select
             placeholder="Vai trò"
+            value={search.role ?? undefined}
             onChange={(e) => setSearch((prev) => ({ ...prev, role: e }))}
-            className="tw-w-full md:tw-w-[150px] lg:tw-w-[150px]"
+            className={isMobile ? "tw-flex-1 tw-min-w-0" : "tw-w-[150px]"}
             allowClear
           >
             <Select.Option value="register">Tôi đăng ký</Select.Option>
@@ -1693,8 +1768,9 @@ const ResourceRegistration = () => {
           </Select>
           <Select
             placeholder="Trạng thái"
+            value={search.status ?? undefined}
             onChange={(e) => setSearch((prev) => ({ ...prev, status: e }))}
-            className="tw-w-full md:tw-w-[150px] lg:tw-w-[150px]"
+            className={isMobile ? "tw-flex-1 tw-min-w-0" : "tw-w-[150px]"}
             allowClear
           >
             {/* <Select.Option value="draft">Nháp</Select.Option> */}
@@ -1703,24 +1779,8 @@ const ResourceRegistration = () => {
             <Select.Option value="rejected">Đã từ chối</Select.Option>
             <Select.Option value="canceled">Hủy</Select.Option>
           </Select>
-
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={() => {
-              if (state?.userFeature?.includes("BOOKING_CREATE")) {
-                setOpen(true);
-              } else {
-                toast.error(
-                  `🚫 Bạn không có quyền đăng ký. 
-                                                                          Vui lòng liên hệ Quản trị viên mở quyền!`
-                );
-              }
-            }}
-          >
-            Thêm đăng ký
-          </Button>
-        </div>
+          </div>
+        )}
       </div>
 
       <div className="body">
@@ -1829,6 +1889,7 @@ const ResourceRegistration = () => {
         </div>
         {/* Bảng ngày tháng */}
         <div
+          ref={gridScrollRef}
           style={{ overflowX: "auto", maxWidth: "100%" }}
           className="tw-overflow-visible"
         >

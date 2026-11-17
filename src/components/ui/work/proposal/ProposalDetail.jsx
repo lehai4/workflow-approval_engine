@@ -277,6 +277,14 @@ const ProposalDetail = ({ uid }) => {
       // Lúc đó người dùng sẽ tự bấm "Tải xuống bất chấp" → vẫn ok, không lỗi!
     };
 
+    // Điện thoại: bỏ các trường không có giá trị cho trang ngắn lại
+    const isEmptyValue =
+      value === null ||
+      value === undefined ||
+      (typeof value === "string" && value.trim() === "") ||
+      (Array.isArray(value) && value.length === 0);
+    if (isMobile && !attachment && isEmptyValue) return null;
+
     return (
       <div className="tw-flex tw-flex-col md:tw-flex-row tw-items-start tw-mb-2 tw-space-y-1 md:tw-space-y-0 md:tw-space-x-4">
         {/* Cột Label */}
@@ -1900,7 +1908,9 @@ const ProposalDetail = ({ uid }) => {
 
     setOpenDrawerCopy(true);
     // console.log(state.proposal);
-    const approval = state.timelineApprovers.flatMap((item) => item.ma_nv);
+    // Dòng đang/đã được duyệt thay (ủy quyền theo thời gian) -> sao chép lấy lại người duyệt gốc;
+    // đề xuất mới tạo ra sẽ được đồng bộ ủy quyền chuyển cho người duyệt thay nếu ủy quyền còn hiệu lực
+    const approval = state.timelineApprovers.flatMap((item) => item.delegated_from || item.ma_nv);
     //set giá trị vào proposal
     setItemConfigProposal(state.proposal);
     //cho phép chọn lại người duyệt
@@ -4923,11 +4933,18 @@ const ProposalDetail = ({ uid }) => {
               className="tw-h-full tw-flex tw-flex-col"
             >
               <div className="tw-flex-1 tw-overflow-y-auto tw-p-4 tw-bg-white tw-rounded-lg tw-shadow-md">
-                <div className="tw-w-full tw-text-base">
-                  <h5 className="tw-uppercase tw-font-bold tw-text-gray-700 tw-mb-0 !tw-text-[18px]">
+                {/* Điện thoại: flex + order đưa nút duyệt / hủy lên ngay dưới tiêu đề (desktop giữ thứ tự cũ) */}
+                <div
+                  className="tw-w-full tw-text-base"
+                  style={isMobile ? { display: "flex", flexDirection: "column" } : undefined}
+                >
+                  <h5
+                    className="tw-uppercase tw-font-bold tw-text-gray-700 tw-mb-0 !tw-text-[18px]"
+                    style={isMobile ? { order: -2 } : undefined}
+                  >
                     Thông tin đề xuất
                   </h5>
-                  <Divider className="tw-mt-3" />
+                  <Divider className="tw-mt-3" style={isMobile ? { order: -2 } : undefined} />
 
                   <div className="tw-space-y-4 tw-text-base">
                     <InfoRow
@@ -5069,7 +5086,7 @@ const ProposalDetail = ({ uid }) => {
                   </div>
 
                   {canApprove && (
-                    <div className="tw-my-4">
+                    <div className="tw-my-4" style={isMobile ? { order: -1, marginTop: 0 } : undefined}>
                       <Row gutter={[16, 16]} justify="center" align="middle">
                         <Col>
                           <Button
@@ -5131,7 +5148,7 @@ const ProposalDetail = ({ uid }) => {
                   )}
 
                   {canCancel && (
-                    <div className="tw-my-4">
+                    <div className="tw-my-4" style={isMobile ? { order: -1, marginTop: 0 } : undefined}>
                       <Row justify="center" align="middle">
                         <Col>
                           <Button
